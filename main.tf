@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.2"
-    }
-  }
-}
-
 provider "aws" {
   region = var.region
 }
@@ -20,9 +11,22 @@ resource "aws_vpc" "vpc" {
   }
 }
 
-resource "aws_subnet" "subnet" {
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc.id
+
+  tags = {
+    Name = "aakulov-aws1"
+  }
+}
+
+resource "aws_subnet" "subnet1" {
   vpc_id     = aws_vpc.vpc.id
-  cidr_block = var.cidr_subnet
+  cidr_block = var.cidr_subnet1
+}
+
+resource "aws_subnet" "subnet2" {
+  vpc_id     = aws_vpc.vpc.id
+  cidr_block = var.cidr_subnet2
 }
 
 resource "aws_security_group" "aakulov-aws1" {
@@ -73,7 +77,7 @@ resource "aws_instance" "aws1" {
   instance_type               = var.instance_type
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.aakulov-aws1.id]
-  subnet_id                   = aws_subnet.subnet.id
+  subnet_id                   = aws_subnet.subnet1.id
   associate_public_ip_address = true
   tags = {
     Name = "aakulov-aws1"
@@ -86,6 +90,15 @@ resource "aws_route53_record" "aws1" {
   type    = "A"
   ttl     = "300"
   records = [aws_instance.aws1.public_ip]
+}
+
+resource "aws_acm_certificate" "cert" {
+  domain_name       = "tfe3.anton.hashicorp-success.com"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 output "public_ip" {
