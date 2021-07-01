@@ -22,11 +22,13 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_subnet" "subnet1" {
   vpc_id     = aws_vpc.vpc.id
   cidr_block = var.cidr_subnet1
+  availability_zone = "eu-central-1b"
 }
 
 resource "aws_subnet" "subnet2" {
   vpc_id     = aws_vpc.vpc.id
   cidr_block = var.cidr_subnet2
+  availability_zone = "eu-central-1a"
 }
 
 resource "aws_security_group" "aakulov-aws1" {
@@ -101,6 +103,33 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
+resource "aws_lb_target_group" "aakulov-aws1" {
+  name     = "aakulov-aws1"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.vpc.id
+  target_type = "instance"
+}
+
+resource "aws_lb_target_group_attachment" "aakulov-aws1" {
+  target_group_arn = aws_lb_target_group.aakulov-aws1.arn
+  target_id        = aws_instance.aws1.id
+  depends_on       = [aws_instance.aws1]
+}
+
+
+
+resource "aws_lb" "aws1" {
+  name               = "aakulov-aws1"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.aakulov-aws1.id]
+  subnets            = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+
+  enable_deletion_protection = false
+}
+
 output "public_ip" {
   value = aws_instance.aws1.public_ip
 }
+
