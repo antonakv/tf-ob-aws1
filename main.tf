@@ -200,11 +200,14 @@ resource "aws_lb_listener" "aws1" {
   }
 }
 
-output "public_ip" {
+output "ec2_instance_public_ip" {
   value = aws_instance.aws1.public_ip
 }
 
-output "lb_url" {
+output "aws_load_balancer_url" {
   value = aws_lb.aws1.dns_name
 }
 
+output "aws_url" {
+  value = aws_route53_record.aws1.name
+}
